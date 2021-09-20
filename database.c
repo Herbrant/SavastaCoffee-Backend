@@ -29,3 +29,46 @@ int createDatabaseTables(sqlite3* db){
 
 	return rc;
 }
+
+int getCoffeeCounterByDate(sqlite3* db, const char* date){
+	sqlite3_stmt* res;
+	char* sql = "SELECT counter FROM Coffee WHERE date = ?";
+	int rc = sqlite3_prepare_v2(db, sql, -1, &res, 0);
+
+	if (rc == SQLITE_OK) 
+        sqlite3_bind_text(res, 1, date, strlen(date), NULL);
+    else{
+		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		return -1;
+	}
+	
+	int step = sqlite3_step(res);
+
+	if(step == SQLITE_ROW){
+		int counter = sqlite3_column_int(res, 0);
+		sqlite3_finalize(res);
+		return counter;
+	}
+	
+	return -1;
+}
+
+int addCoffee(sqlite3* db, const char* date){
+	char* err_msg = 0;
+	char* tempalte_sql = "UPDATE Coffee SET counter = counter+1 WHERE date = ";
+	char sql[64];
+
+	if(snprintf(sql, 64, "%s\"%s\"", tempalte_sql, date) <= 0)
+		return 1;
+
+	printf("%s\n", sql);
+	int rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+    
+    if (rc != SQLITE_OK ) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+        return 1;
+    } 
+    
+	return 0;
+}

@@ -13,8 +13,8 @@ int main(void) {
 
 	// Initialize instance with the port number
 	if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
-	fprintf(stderr, "Error ulfius_init_instance, abort\n");
-	return(1);
+		fprintf(stderr, "Error ulfius_init_instance, abort\n");
+		return(1);
 	}
 
 	//Initialize sqlite3
@@ -35,18 +35,19 @@ int main(void) {
 		return(1);
 
 	// Endpoint list declaration
-	ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, 0, &callback_hello_world, NULL);
-	ulfius_add_endpoint_by_val(&instance, "POST", "/", NULL, 0, &callback_add_coffee, NULL);
+	ulfius_add_endpoint_by_val(&instance, "POST", "/", NULL, 0, &callback_coffee, db);
 
 	// Start the framework
 	if (ulfius_start_framework(&instance) == U_OK) {
-	printf("Start framework on port %d\n", instance.port);
+		printf("Start framework on port %d\n", instance.port);
 
-	// Wait for the user to press <enter> on the console to quit the application
-	getchar();
-	} else {
-	fprintf(stderr, "Error starting framework\n");
+		// Wait for the user to press <enter> on the console to quit the application
+		getchar();
+	} 
+	else {
+		fprintf(stderr, "Error starting framework\n");
 	}
+
 	printf("End framework\n");
 
 	ulfius_stop_framework(&instance);

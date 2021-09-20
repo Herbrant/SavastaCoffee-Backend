@@ -3,9 +3,12 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 int createDatabaseIfNotExists();
 int createDatabaseTables(sqlite3* db);
+int getCoffeeCounterByDate(sqlite3* db, const char* date);
+int addCoffee(sqlite3* db, const char* date);
 
 
 #endif
