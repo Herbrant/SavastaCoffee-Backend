@@ -53,6 +53,26 @@ int getCoffeeCounterByDate(sqlite3* db, const char* date){
 	return -1;
 }
 
+int initCoffeeDay(sqlite3* db){
+	char* err_msg = 0;
+	time_t t = time(NULL);
+  	struct tm tm = *localtime(&t);
+	char sql[64];
+
+	if(snprintf(sql, 64, "INSERT INTO Coffee(date, counter) VALUES(\"%d-%02d-%02d\", 0)", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday) <= 0)
+		return 1;
+	int rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+
+
+    if (rc != SQLITE_OK ) {
+        //fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+        return 1;
+    }
+    
+	return 0;
+}
+
 int addCoffee(sqlite3* db, const char* date){
 	char* err_msg = 0;
 	char* tempalte_sql = "UPDATE Coffee SET counter = counter+1 WHERE date = ";
@@ -61,7 +81,6 @@ int addCoffee(sqlite3* db, const char* date){
 	if(snprintf(sql, 64, "%s\"%s\"", tempalte_sql, date) <= 0)
 		return 1;
 
-	printf("%s\n", sql);
 	int rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     
     if (rc != SQLITE_OK ) {

@@ -26,6 +26,41 @@ void callback_add_coffee(json_t* json_request, json_t* json_response, void* db){
         json_object_set_new(json_response, "status", json_string("success"));
 }
 
+void callback_add_today_coffee(json_t* json_request, json_t* json_response, void* db){
+    time_t t = time(NULL);
+  	struct tm tm = *localtime(&t);
+    char date[11];
+
+    if(snprintf(date, 11, "%d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday) <= 0){
+        json_object_set_new(json_response, "status", json_string("error"));
+        return;
+    }
+
+    printf("%s\n", date);
+    
+    initCoffeeDay(db);
+
+    if(addCoffee(db, date) != 0)
+        json_object_set_new(json_response, "status", json_string("error"));
+    else
+        json_object_set_new(json_response, "status", json_string("success"));
+}
+
+void callback_get_today_coffee(json_t* json_request, json_t* json_response, void* db){
+    time_t t = time(NULL);
+  	struct tm tm = *localtime(&t);
+    char date[11];
+
+    if(snprintf(date, 11, "%d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday) <= 0){
+        json_object_set_new(json_response, "status", json_string("error"));
+        return;
+    }
+    
+    int counter = getCoffeeCounterByDate(db, date);
+    json_object_set_new(json_response, "status", json_string("success"));
+    json_object_set_new(json_response, "counter", json_integer(counter));
+}
+
 int callback_coffee(const struct _u_request* request, struct _u_response* response, void* db){
     json_t* json_request;
     json_error_t json_error;
@@ -53,6 +88,14 @@ int callback_coffee(const struct _u_request* request, struct _u_response* respon
     }
     else if(!strcmp(operation, "add")){
         callback_add_coffee(json_request, json_response, db);
+        ulfius_set_json_body_response(response, 200, json_response);
+    }
+    else if(!strcmp(operation, "add_today_coffee")){
+        callback_add_today_coffee(json_request, json_response, db);
+        ulfius_set_json_body_response(response, 200, json_response);
+    }
+    else if(!strcmp(operation, "get_today_coffee")){
+        callback_get_today_coffee(json_request, json_response, db);
         ulfius_set_json_body_response(response, 200, json_response);
     }
     else{
