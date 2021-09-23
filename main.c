@@ -17,6 +17,11 @@ int main(void) {
 		return(1);
 	}
 
+	u_map_put((&instance)->default_headers, "Access-Control-Allow-Origin", "*");
+	u_map_put((&instance)->default_headers, "Access-Control-Allow-Credentials", "true");
+	u_map_put((&instance)->default_headers, "Cache-Control", "no-store");
+	u_map_put((&instance)->default_headers, "Pragma", "no-cache");
+
 	//Initialize sqlite3
 	if(createDatabaseIfNotExists(DB_PATH))
 		return 1;
@@ -36,6 +41,7 @@ int main(void) {
 
 	// Endpoint list declaration
 	ulfius_add_endpoint_by_val(&instance, "POST", "/", NULL, 0, &callback_coffee, db);
+	ulfius_add_endpoint_by_val(&instance, "OPTIONS", NULL, "*", 0, &callback_options, NULL);
 
 	// Start the framework
 	if (ulfius_start_framework(&instance) == U_OK) {
