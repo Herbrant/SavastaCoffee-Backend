@@ -41,6 +41,7 @@ int main(void) {
 
 	// Endpoint list declaration
 	ulfius_add_endpoint_by_val(&instance, "POST", "/", NULL, 0, &callback_coffee, db);
+	ulfius_add_endpoint_by_val(&instance, "POST", "/login", NULL, 0, &callback_login, db);
 	ulfius_add_endpoint_by_val(&instance, "OPTIONS", NULL, "*", 0, &callback_options, NULL);
 
 	// Start the framework
