@@ -118,3 +118,66 @@ int callback_options(const struct _u_request *request, struct _u_response *respo
   u_map_put(response->map_header, "Access-Control-Max-Age", "1800");
   return U_CALLBACK_COMPLETE;
 }
+
+int callback_login(const struct _u_request *request, struct _u_response *response, void* db){
+    json_t* json_request;
+    json_error_t json_error;
+    json_t* json_response = json_object();
+
+    json_request = ulfius_get_json_body_request(request, &json_error);
+
+    if(json_request == NULL){
+        json_object_set_new(json_response, "status", json_string("error"));
+        json_object_set_new(json_response, "error", json_string(json_error.text));
+        ulfius_set_json_body_response(response, 401, json_response);
+        return U_CALLBACK_UNAUTHORIZED;
+    }
+
+    json_t* json_username = json_object_get(json_request, "username");
+    json_t* json_password = json_object_get(json_request, "password");
+
+    if(!json_username || !json_password){
+        json_object_set_new(json_response, "status", json_string("error"));
+        json_object_set_new(json_response, "error", json_string(json_error.text));
+        ulfius_set_json_body_response(response, 401, json_response);
+        return U_CALLBACK_UNAUTHORIZED;
+    }
+
+    const char* username = json_string_value(json_username);
+    const char* password = json_string_value(json_password);
+    char* user_password = getUserPassword(db, username);
+    char* salt = getUserSalt(db, username);
+
+    if(user_password == NULL){
+        json_object_set_new(json_response, "status", json_string("error"));
+        ulfius_set_json_body_response(response, 401, json_response);
+        return U_CALLBACK_UNAUTHORIZED;
+    }
+
+    char* hash = crypt(password, salt);
+
+    if(strcmp(user_password, hash) != 0){
+        json_object_set_new(json_response, "status", json_string("error"));
+        ulfius_set_json_body_response(response, 401, json_response);
+        return U_CALLBACK_UNAUTHORIZED;
+    }
+
+    free(user_password);
+    free(salt);
+
+    json_object_set_new(json_response, "status", json_string("success"));
+    ulfius_set_json_body_response(response, 200, json_response);
+
+    char* auth_token = malloc(sizeof(char)*42);
+    getrandom(auth_token, 42, 0);
+
+    for(int i = 0; i < 42; i++){
+        if(auth_token[i] < 0)
+            auth_token[i] = - auth_token[i];
+        auth_token[i] = 32 + (auth_token[i] % 95);
+    }
+    
+    ulfius_add_cookie_to_response(response, "auth_token", auth_token, "1200", 1200, "localhost", "/", 0, 1);
+    free(auth_token);
+    return U_CALLBACK_CONTINUE;
+}
